@@ -1,0 +1,100 @@
+# EBNF Grammar for Standard ML; Revision '97
+# Source: "The Definition of Standard ML - Revised by Robin Milner, Robert Harper, David McQueen etc. --- MIT Press"
+
+# A: Expressions and Matches
+
+sml-application  ::= sml-expression { sml-expression }          # Application
+
+sml-expression   ::= special-constant                           # Special constant
+                 | [ operator ] long-value-identifier           # Value identifier
+                 | '{' expression-row
+                        { ',' expression-row } '}'              # Record Initializer
+                 | '#' identifier                               # Record Selector
+                 | "()"                                         # Unit
+                 | '(' expression ',' { ',' expression } ')'    # n-tuple
+                 | '[' [ expression { ',' expression } ] ']'    # List
+                 | '(' [ expression { ',' expression } ] ')'    # Sequence
+                 | "let" declaration 
+                        "in" expression { expression } "end"    # Local Declaration
+                 | '(' expression ')'                           # Grouped Expression
+                 | infix-expression                             # Infix Expression
+                 | reference-expression                         # Reference Expression
+                 | dereference-expression                       # Dereference Expression
+
+expression-row   ::= identifier '=' expression                  # Expression Row
+
+infix-expression ::= postfix-expression				# Base Infix
+                 | infix-expression
+                        { identifier infix-expression }         # Infix Expression
+
+postfix-expression ::= [ identifier ] solo-expression		# Base Postfix
+
+solo-expression  ::= infix-expression
+                 | solo-expression ':' type                     # Type Restriction
+                 | solo-expression "andalso" solo-expression    # Conjunction
+                 | solo-expression "orelse" solo-expression     # Disjunction
+                 | solo-expression "handle" match-situation     # Exception Handling
+                 | "raise" solo-expression                      # Exception Raising
+                 | "if" solo-expression
+                        "then" solo-expression 
+                        "else" solo-expression                  # Conditional
+                 | "while" solo-expression 
+                        "do" solo-expression                    # Iteration
+                 | "case" solo-expression 
+                        "of" match-situation                    # Case Analysis
+                 | "fn" match-situation                         # Function
+
+match-situation  ::= match-rule { '|' match-rule }              # Match Situation
+
+match-rule       ::= match-pattern "=>" match-pattern           # Match Pattern
+
+declaration      ::= val-declaration
+                 | fun-declaration
+		 | "infix" [ integer-literal ] [ identifier ] identifier
+		 | "infixr" [ integer-literal ]  [ identifier ] identifier
+		 | "nonfix" [ integer-literal ] [ identifier ] identifier
+
+val-declaration  ::= "val" val-binding { "and" val-binding }    # Value Binding Declaration
+
+fun-declaration  ::= "fun" [ "rec" ] 
+			fun-binding { "and" fun-binding }      # Function Binding Declaration
+
+val-binding      ::= pattern '=' expression                    # Value Binding
+
+fun-binding      ::= pattern '=' expression                    # Function Binding
+
+type             ::= type-constructor
+                 | type-variable
+                 | type '(' type { ',' type } ')'              # Type Constructor Application
+                 | type "->" type                              # Function Type
+
+pattern          ::= identifier
+                 | '_'                                         # Wildcard Pattern
+                 | '(' pattern ',' { ',' pattern } ')'         # Tuple Pattern
+                 | '[' pattern { ',' pattern } ']'             # List Pattern
+                 | type-constructor pattern                    # Type Constructor Pattern
+
+type-constructor ::= long-value-identifier                     # Type Constructor
+
+type-variable    ::= identifier                                # Type Variable
+
+special-constant ::= integer-literal
+                 | float-literal
+                 | string-literal
+                 | char-literal
+                 | bool-literal
+
+integer-literal  ::= [ '-' ] digit { digit }
+
+float-literal    ::= [ '-' ] digit { digit } "." digit { digit }
+
+string-literal   ::= '"' { character } '"'
+
+char-literal     ::= "'" character "'"
+
+bool-literal     ::= "true" | "false"
+
+identifier	 ::= letter { letter | digit | '_' }
+
+digit		 ::= '0' | '1' | '2' | ... | '9'
+letter		 ::= 'A' | 'B' | 'C' | ... | 'Z' | 'a' | 'b' | 'c' | ... | 'z'
