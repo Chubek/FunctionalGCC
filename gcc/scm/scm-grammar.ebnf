@@ -1,0 +1,64 @@
+# EBNF Grammar for Base S-Expressions of Scheme
+
+
+program                 ::= { list }
+
+list                    ::= '(' [ expression-list ] ')'
+
+expression-list         ::= expression { expression }
+
+expression              ::= atom | list | quoted-expression
+
+quoted-expression       ::= "'" list
+
+atom                    ::= identifier 
+                        | initializer-keyword
+                        | number-literal
+                        | boolean-literal
+                        | string-literal
+                        | character-literal
+
+initializer-keyword     ::= "quote"
+                        | "define"
+                        | "begin"
+                        | "if"
+                        | "set!"
+			| "define-syntax"
+			| "syntax-rules"
+
+identifier              ::= letter { letter | digit | special-character }
+
+number-literal          ::= integer | real
+
+real-literal            ::= integer '.' integer  
+                        | integer ( 'e' | 'E' ) [ '-' | '+' ] integer
+
+integer-literal         ::= digit { digit }
+
+boolean-literal         ::= "#t" | "#f"
+
+character-literal       ::= '#' escape-sequence
+
+string-literal          ::= '"' { escape-sequence | any-char } '"'
+
+escape-sequence         ::= '\' any-ascii    
+                        | '\' "U+" digit [ digit ] [ digit ] 
+					 [ digit ] [ digit ] 
+					 [ digit ] [ digit ]
+					 [ digit ] [ digit ]
+                        | '\' digit   [ digit ] 
+			    [ digit ] [ digit ]
+
+digit                   ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+letter                  ::= 'a' | 'b' | 'c' | ... | 'z' | 'A' | 'B' | 'C' | ... | 'Z'
+
+special-character       ::= '+' | '-' | '*' | '/' 
+			| '=' | '<' | '>' | '?' 
+			| '!' | '_' | '$' | '%' 
+			| '&' | '@' | '^' | '~'
+
+any-char                ::= ? any-valid-UTF8-character ?
+
+any-ascii               ::= ? any-valid-ASCII-character ?
+
