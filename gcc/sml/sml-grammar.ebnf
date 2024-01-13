@@ -1,182 +1,125 @@
-# EBNF Grammar for Standard ML; Revision '97
-# Source: "The Definition of Standard ML - Revised by Robin Milner, Robert Harper, David McQueen etc. --- MIT Press"
+program        ::= "structure" identifier '=' structure ';' 
+	       | "functor" identifier functor-binding '=' structure "end"
+               | "signature" identifier '=' signature ';' 
+	       | "datatype" identifier '=' datatype-declarations "end"
+               | "val" pattern '=' expression ';' 
+	       | "fun" function-binding 
+	       | "exception" identifier 
+	       | "local" structure "in" structure "end"
 
-# A: Expressions and Matches
+structure      ::= structure-item { ';' structure-item }
+structure-item ::= "structure" identifier '=' structure 
+               | "functor" identifier functor-binding '=' structure "end"
+               | "signature" identifier '=' signature 
+	       | "datatype" identifier '=' datatype-declarations "end"
+               | "val" identifier ':' type '=' expression 
+	       | "val" pattern '=' expression | "fun" function-binding
+               | "local" structure "in" structure "end" | "open" identifier
 
-application ::= expression { expression }         # Application
-             | module-declaration
+functor-binding ::= '(' identifier ':' signature ')' 
+		| '(' identifier '=' identifier ':' signature ')' 
+		| identifier
 
-expression ::= constant
-           | [ operator ] long-identifier
-           | '{' row
-                  { ',' row } '}'                 # Record Initializer
-           | '#' identifier                      # Record Selector
-           | "()"                                # Unit
-           | '(' expression ',' { ',' expression } ')'  # n-tuple
-           | '[' [ expression { ',' expression } ] ']'  # List
-           | '(' [ expression { ',' expression } ] ')'  # Sequence
-           | "let" declaration 
-                  "in" expression { expression } "end"  # Local Declaration
-           | '(' expression ')'                   # Grouped Expression
-           | infix-expression                     # Infix Expression
-           | ref-expression                       # Reference Expression
-           | deref-expression                     # Dereference Expression
-	   | functor-expression			  # Functor Expression
-	   | struct-expression			  # Structure Expression
+signature      ::= "sig" signature-declarations "end"
+signature-declarations ::=  type-declaration 
+		       | val-declaration 
+		       | exception-declaration  { ';' ( type-declaration 
+		       					| val-declaration 
+							| exception-declaration } 
 
-row ::= identifier '=' expression                # Expression Row
+type-declaration ::= "type" type-constructor '=' type-spec 
+		 | "type" type-constructor type-var-list '=' type-spec
+type-spec      ::= type | '(' type ',' type { ',' type } ')'
+type           ::= type-constructor | type-variable | '(' type ')'
+type-var-list  ::= type-variable { "'" type-variable }
 
-ref-expression ::= "ref" ( long-identifier  | constant )
-deref-expression ::= "!" long-identifier
+datatype-declarations ::= datatype-constructor '=' type 
+		      | datatype-constructor of-constructor { '|' of-constructor }
 
-infix-expression ::= postfix-expression            # Base Infix
-               | infix-expression
-                  { identifier infix-expression } # Infix Expression
+type-constructor      ::= "type" identifier
+datatype-constructor  ::= "datatype" identifeir
 
-postfix-expression ::= [ identifier ] solo-expression  # Base Postfix
+of-constructor ::= constructor | constructor "of" type { ',' type }
 
-solo-expression ::= infix-expression
-               | solo-expression ':' type          # Type Restriction
-               | solo-expression "andalso" solo-expression  # Conjunction
-               | solo-expression "orelse" solo-expression   # Disjunction
-               | solo-expression "handle" match-situation   # Exception Handling
-               | "raise" solo-expression             # Exception Raising
-               | "if" solo-expression
-                  "then" solo-expression 
-                  "else" solo-expression             # Conditional
-               | "while" solo-expression 
-                  "do" solo-expression               # Iteration
-               | "case" solo-expression 
-                  "of" match-situation               # Case Analysis
-               | "fn" match-situation                # Function
+val-declaration ::= "val" identifier ':' type
 
-match-situation ::= match-rule { '|' match-rule }  # Match Situation
+exception-declaration ::= "exception" identifier
 
-match-rule ::= pattern "=>" pattern                # Match Pattern
+expression     ::= primary-expression 
+	       | unary-expression 
+	       | binary-expression 
+	       | let-expression 
+	       | if-expression 
+	       | case-expression 
+	       | function-application
 
-declaration ::= val-declaration
-             | fun-declaration
-             | "infix" [ int-literal ] [ identifier ] identifier
-             | "infixr" [ int-literal ]  [ identifier ] identifier
-             | "nonfix" [ int-literal ] [ identifier ] identifier
+infix-expression ::= "infix" [ integer ] { identifier }
+		 | "infixr" [ integer ] { identifier }
+		 | "nonfix" identififier
 
-val-declaration ::= "val" val-binding { "and" val-binding }  # Value Binding Declaration
+primary-expression ::= literal 
+		   | identifier 
+		   | '(' expression ')' 
+		   | "fn" match 
 
-fun-declaration ::= "fun" [ "rec" ] 
-               fun-binding { "and" fun-binding }   # Function Binding Declaration
+literal        ::= integer | real | string | boolean| character
+boolean	       ::= "true" | "false"
+real           ::= integer '.' integer
+integer        ::= digit { digit }
+string         ::= '"' { any-character | escape-sequence } '"'
+character      ::= '#"' ( any-character | escape-sequence ) '"'
+escape-sequence ::= '\' ( 'n' | 't' | '\' | "\\" | 'r' | 'a' | '"' | "'" | 'b' | 'f' | 'v' | unicode-escape | hex-escape )
+unicode-escape  ::= "U+" digit [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ digit ] ] ] ] ] ]
+hex-escape      ::= "x" digit [ digit ] [ [ digit ] [ [ digit ] [ digit ] ] ]
 
-val-binding ::= pattern '=' expression            # Value Binding
+unary-expression ::= '-' expression
 
-fun-binding ::= pattern '=' expression            # Function Binding
+binary-expression ::= expression '+' expression 
+		  | expression '-' expression 
+		  | expression '*' expression 
+		  | expression '/' expression
+                  | expression '=' expression 
+		  | expression '<' expression 
+		  | expression '>' expression 
+		  | expression "<=" expression 
+		  | expression ">=" expression
+                  | expression "andalso" expression 
+		  | expression "orelse" expression 
+		  | expression "div" expression 
+		  | expression "mod" expression
 
-type ::= type-constructor
-      | type-variable
-      | type '(' type { ',' type } ')'           # Type Constructor Application
-      | type "->" type                           # Function Type
+let-expression  ::= "let" decls "in" expression "end"
+decls          ::= decl { ';' decl }
+decl           ::= "val" pattern '=' expression | "fun" function-binding
 
-pattern ::= identifier
-         | '_'                                    # Wildcard Pattern
-         | '(' pattern ',' { ',' pattern } ')'    # Tuple Pattern
-         | '[' pattern { ',' pattern } ']'        # List Pattern
-         | type-constructor pattern               # Type Constructor Pattern
+if-expression   ::= "if" expression "then" expression "else" expression
 
-type-constructor ::= long-identifier              # Type Constructor
+case-expression ::= "case" expression "of" match
+match          ::= pattern "=>" expression { '|' pattern "=>" expression }
 
-type-variable ::= identifier                      # Type Variable
+function-application ::= expression expression
 
-constant ::= int-literal
-         | float-literal
-         | string-literal
-         | char-literal
-         | bool-literal
+pattern        ::= identifier | '_' | '(' pattern ',' pattern { ',' pattern } ')' | constructor pattern-list
+pattern-list   ::= pattern { " " pattern }
 
-# B: Module System
+type-variable  ::= identifier
+type-constructor ::= identifier
 
-module-declaration ::= "structure" long-identifier
-                  | "functor" long-identifier functor-arg-spec
-                    "=>" long-identifier
-                  | "local" struct-level-declaration
-                    "in" struct-level-declaration
-                    { struct-level-declaration }
-                    "end"
 
-struct-level-declaration ::= long-identifier
-                    | struct-level-declaration
-                      long-identifier
-                      { struct-level-identifier }
-                      '=' struct-expression
+identifier	      ::= symbolic-identifier | alphabetic-identifier | op-identifier
+op-identifier	      ::= "op" symbolic-identifier
+symbolic-identifier   ::= ( punctuation | letter ) { punctuation | letter | digit }
+alphabetic-identifier ::= letter { letter | digit | '_' | "'" }
 
-functor-arg-spec ::= '(' functor-arg-decl { ',' functor-arg-decl } ')'
-                 | '(' functor-arg-decl { ',' functor-arg-decl } ')' ':' long-identifier
+punctuation    ::= '!' | '"' | '#' | '$' 
+	       | '%' | '&' | ''' | '(' 
+	       | ')' | '*' | '+' | ',' 
+	       | '-' | '.' | '/' | ':' 
+	       | ';' | '<' | '=' | '>' 
+	       | '?' | '@' | '[' | '\' 
+	       | ']' | '^' | '_' | '`' 
+	       | '{' | '|' | '}' | '~'
 
-functor-arg-decl ::= long-identifier
-               | '(' functor-arg-decl { ',' functor-arg-decl } ')' ':' long-identifier
-
-struct-expression ::= long-identifier
-                | "struct" { struct-level-declaration } "end"
-                | '(' struct-expression ',' { ',' struct-expression } ')'
-
-long-identifier ::= long-value-identifier
-
-struct-level-identifier ::= long-value-identifier
-
-signature-declaration ::= "signature" long-identifier
-                   | "where" long-identifier
-                     "sig" { signature-declaration } "end"
-
-spec-expression ::= long-identifier
-              | "struct" { spec-level-declaration } "end"
-              | '(' spec-expression ',' { ',' spec-expression } ')'
-
-spec-level-declaration ::= long-identifier
-                   | spec-level-declaration
-                     long-identifier
-                     { spec-level-identifier }
-                     '=' spec-expression
-
-functor-declaration ::= "functor" long-identifier functor-arg-spec
-                 | "where" long-identifier
-                   "fun" { functor-declaration } "end"
-
-functor-arg-spec ::= '(' functor-arg-decl { ',' functor-arg-decl } ')'
-                 | '(' functor-arg-decl { ',' functor-arg-decl } ')' 
-				':' long-identifier
-
-functor-arg-decl ::= long-identifier
-               | '(' functor-arg-decl { ',' functor-arg-decl } ')' 
-	      			':' long-identifier
-
-functor-binding ::= long-identifier
-              | "struct" { struct-level-declaration } "end"
-              | '(' functor-binding ',' { ',' functor-binding } ')'
-              | functor-binding long-identifier '=' functor-expression
-
-functor-expression ::= long-identifier
-                | "struct" { struct-level-declaration } "end"
-                | '(' functor-expression ',' { ',' functor-expression } ')'
-                | long-identifier '(' functor-binding { ',' functor-binding } ')'
-                | "fn" functor-arg-decl "=>" functor-expression
-
-functor-arg-decl ::= long-identifier
-               | '(' functor-arg-decl { ',' functor-arg-decl } ')' ':' long-identifier
-
-long-identifier ::= identifier { '.' identifier }
-
-# C. Lexical Considerations
-
-identifier ::= letter { letter | digit | '_' }
-
-int-literal ::= [ '-' ] digit { digit }
-
-float-literal ::= [ '-' ] digit { digit } "." digit { digit }
-
-string-literal ::= '"' { character } '"'
-
-char-literal ::= "'" character "'"
-
-bool-literal ::= "true" | "false"
-
-digit ::= '0' | '1' | '2' | ... | '9'
-
-letter ::= 'A' | 'B' | 'C' | ... | 'Z' | 'a' | 'b' | 'c' | ... | 'z'
-
+letter         ::= 'a' | 'b' | ... | 'z' | 'A' | 'B' | ... | 'Z'
+digit          ::= '0' | '1' | ... | '9'
+any-character  ::= ? any-ASCII-character-except-single-quote-and-backslash ?
