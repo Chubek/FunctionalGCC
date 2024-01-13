@@ -1,125 +1,129 @@
-program        ::= "structure" identifier '=' structure ';' 
-	       | "functor" identifier functor-binding '=' structure "end"
-               | "signature" identifier '=' signature ';' 
-	       | "datatype" identifier '=' datatype-declarations "end"
-               | "val" pattern '=' expression ';' 
-	       | "fun" function-binding 
-	       | "exception" identifier 
-	       | "local" structure "in" structure "end"
+program            ::= "structure" identifier '=' structure ';' 
+                    | "functor" identifier functor-binding '=' structure "end"
+                    | "signature" identifier '=' signature ';' 
+                    | "datatype" identifier '=' datatype-declarations "end"
+                    | "val" pattern '=' expression ';' 
+                    | "fun" function-binding 
+                    | "exception" identifier 
+                    | "local" structure "in" structure "end"
 
-structure      ::= structure-item { ';' structure-item }
-structure-item ::= "structure" identifier '=' structure 
-               | "functor" identifier functor-binding '=' structure "end"
-               | "signature" identifier '=' signature 
-	       | "datatype" identifier '=' datatype-declarations "end"
-               | "val" identifier ':' type '=' expression 
-	       | "val" pattern '=' expression | "fun" function-binding
-               | "local" structure "in" structure "end" | "open" identifier
+structure          ::= structure-item { ';' structure-item }
+structure-item     ::= "structure" identifier '=' structure 
+                    | "functor" identifier functor-binding '=' structure "end"
+                    | "signature" identifier '=' signature 
+                    | "datatype" identifier '=' datatype-declarations "end"
+                    | "val" identifier ':' type '=' expression 
+                    | "val" pattern '=' expression 
+                    | "fun" function-binding
+                    | "local" structure "in" structure "end" 
+                    | "open" identifier
 
-functor-binding ::= '(' identifier ':' signature ')' 
-		| '(' identifier '=' identifier ':' signature ')' 
-		| identifier
+functor-binding    ::= '(' identifier ':' signature ')' 
+                    | '(' identifier '=' identifier ':' signature ')' 
+                    | identifier
 
-signature      ::= "sig" signature-declarations "end"
+signature          ::= "sig" signature-declarations "end"
 signature-declarations ::=  type-declaration 
-		       | val-declaration 
-		       | exception-declaration  { ';' ( type-declaration 
-		       					| val-declaration 
-							| exception-declaration } 
+                      | val-declaration 
+                      | exception-declaration  { ';' ( type-declaration 
+                                                        | val-declaration 
+                                                        | exception-declaration ) } 
 
-type-declaration ::= "type" type-constructor '=' type-spec 
-		 | "type" type-constructor type-var-list '=' type-spec
-type-spec      ::= type | '(' type ',' type { ',' type } ')'
-type           ::= type-constructor | type-variable | '(' type ')'
-type-var-list  ::= type-variable { "'" type-variable }
+type-declaration   ::= "type" type-constructor '=' type-spec 
+                    | "type" type-constructor type-var-list '=' type-spec
+type-spec          ::= type | '(' type ',' type { ',' type } ')'
+type               ::= type-constructor | type-variable | '(' type ')'
+type-var-list      ::= type-variable { "'" type-variable }
 
 datatype-declarations ::= datatype-constructor '=' type 
-		      | datatype-constructor of-constructor { '|' of-constructor }
+                     | datatype-constructor of-constructor { '|' of-constructor }
 
-type-constructor      ::= "type" identifier
-datatype-constructor  ::= "datatype" identifeir
+type-constructor        ::= "type" identifier
+datatype-constructor    ::= "datatype" identifeir
 
-of-constructor ::= constructor | constructor "of" type { ',' type }
+of-constructor   ::= constructor | constructor "of" type { ',' type }
 
-val-declaration ::= "val" identifier ':' type
+val-declaration  ::= "val" identifier ':' type
 
 exception-declaration ::= "exception" identifier
 
-expression     ::= primary-expression 
-	       | unary-expression 
-	       | binary-expression 
-	       | let-expression 
-	       | if-expression 
-	       | case-expression 
-	       | function-application
+expression       ::= primary-expression 
+                    | unary-expression 
+                    | binary-expression 
+                    | let-expression 
+                    | if-expression 
+                    | case-expression 
+                    | function-application
 
-infix-expression ::= "infix" [ integer ] { identifier }
-		 | "infixr" [ integer ] { identifier }
-		 | "nonfix" identififier
+infix-expression  ::= "infix" [ integer ] { identifier } 
+                    | "infixr" [ integer ] { identifier } 
+                    | "nonfix" identififier
 
 primary-expression ::= literal 
-		   | identifier 
-		   | '(' expression ')' 
-		   | "fn" match 
+                  | identifier 
+                  | '(' expression ')' 
+                  | "fn" match 
 
-literal        ::= integer | real | string | boolean| character
-boolean	       ::= "true" | "false"
-real           ::= integer '.' integer
-integer        ::= digit { digit }
-string         ::= '"' { any-character | escape-sequence } '"'
-character      ::= '#"' ( any-character | escape-sequence ) '"'
-escape-sequence ::= '\' ( 'n' | 't' | '\' | "\\" | 'r' | 'a' | '"' | "'" | 'b' | 'f' | 'v' | unicode-escape | hex-escape )
-unicode-escape  ::= "U+" digit [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ digit ] ] ] ] ] ]
-hex-escape      ::= "x" digit [ digit ] [ [ digit ] [ [ digit ] [ digit ] ] ]
+literal          ::= integer | real | string | boolean | character
+boolean          ::= "true" | "false"
+real             ::= integer '.' integer
+integer          ::= digit { digit }
+string           ::= '"' { any-character | escape-sequence } '"'
+character        ::= '#"' ( any-character | escape-sequence ) '"'
+escape-sequence  ::= '\' ( 'n' | 't' | '\' | "\\" | 'r' | 'a' | '"' | "'" | 'b' | 'f' | 'v' | unicode-escape | hex-escape )
+unicode-escape   ::= "U+" digit [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ [ digit ] [ digit ] ] ] ] ] ]
+hex-escape       ::= "x" digit [ digit ] [ [ digit ] [ [ digit ] [ digit ] ] ]
 
-unary-expression ::= '-' expression
+unary-expression  ::= '-' expression
 
 binary-expression ::= expression '+' expression 
-		  | expression '-' expression 
-		  | expression '*' expression 
-		  | expression '/' expression
+                  | expression '-' expression 
+                  | expression '*' expression 
+                  | expression '/' expression
                   | expression '=' expression 
-		  | expression '<' expression 
-		  | expression '>' expression 
-		  | expression "<=" expression 
-		  | expression ">=" expression
+                  | expression '<' expression 
+                  | expression '>' expression 
+                  | expression "<=" expression 
+                  | expression ">=" expression
                   | expression "andalso" expression 
-		  | expression "orelse" expression 
-		  | expression "div" expression 
-		  | expression "mod" expression
+                  | expression "orelse" expression 
+                  | expression "div" expression 
+                  | expression "mod" expression
 
-let-expression  ::= "let" decls "in" expression "end"
-decls          ::= decl { ';' decl }
-decl           ::= "val" pattern '=' expression | "fun" function-binding
+let-expression   ::= "let" decls "in" expression "end"
+decls            ::= decl { ';' decl }
+decl             ::= "val" pattern '=' expression | "fun" function-binding
 
-if-expression   ::= "if" expression "then" expression "else" expression
+if-expression     ::= "if" expression "then" expression "else" expression
 
-case-expression ::= "case" expression "of" match
-match          ::= pattern "=>" expression { '|' pattern "=>" expression }
+case-expression  ::= "case" expression "of" match
+match            ::= pattern "=>" expression { '|' pattern "=>" expression }
 
 function-application ::= expression expression
 
-pattern        ::= identifier | '_' | '(' pattern ',' pattern { ',' pattern } ')' | constructor pattern-list
-pattern-list   ::= pattern { " " pattern }
+pattern          ::= identifier | '_' 
+                  | '(' pattern ',' pattern { ',' pattern } ')' 
+                  | constructor pattern-list
+pattern-list     ::= pattern { " " pattern }
 
-type-variable  ::= identifier
+type-variable    ::= identifier
 type-constructor ::= identifier
 
-
-identifier	      ::= symbolic-identifier | alphabetic-identifier | op-identifier
-op-identifier	      ::= "op" symbolic-identifier
+identifier       ::= symbolic-identifier | alphabetic-identifier | op-identifier
+op-identifier    ::= "op" symbolic-identifier
 symbolic-identifier   ::= ( punctuation | letter ) { punctuation | letter | digit }
 alphabetic-identifier ::= letter { letter | digit | '_' | "'" }
 
-punctuation    ::= '!' | '"' | '#' | '$' 
-	       | '%' | '&' | ''' | '(' 
-	       | ')' | '*' | '+' | ',' 
-	       | '-' | '.' | '/' | ':' 
-	       | ';' | '<' | '=' | '>' 
-	       | '?' | '@' | '[' | '\' 
-	       | ']' | '^' | '_' | '`' 
-	       | '{' | '|' | '}' | '~'
+punctuation      ::= '!' | '"' | '#' | '$' 
+                  | '%' | '&' | ''' | '(' 
+                  | ')' | '*' | '+' | ',' 
+                  | '-' | '.' | '/' | ':' 
+                  | ';' | '<' | '=' | '>' 
+                  | '?' | '@' | '[' | '\' 
+                  | ']' | '^' | '_' | '`' 
+                  | '{' | '|' | '}' | '~'
 
-letter         ::= 'a' | 'b' | ... | 'z' | 'A' | 'B' | ... | 'Z'
-digit          ::= '0' | '1' | ... | '9'
-any-character  ::= ? any-ASCII-character-except-single-quote-and-backslash ?
+letter           ::= 'a' | 'b' | ... | 'z' | 'A' | 'B' | ... | 'Z'
+digit            ::= '0' | '1' | ... | '9'
+any-character    ::= ? any-ASCII-character-except-single-quote-and-backslash ?
+
