@@ -1,225 +1,211 @@
-#include "sml-lexer.h"
+#include <iostream>
+#include <cctype>
 
-Token::Token(const string &lexeme, TokenKind kind)
-{
-    tokenValue = lexeme;
-    tokenKind = kind;
-}
+class Lexer {
+private:
+    const char* input;
+    size_t position;
+    std::unordered_set<std::string> keywords;
 
-TokenKind Token::getKind(void)
-{
-    return tokenKind;
-}
-
-Lexeme Token::getValue(void)
-{
-    return tokenValue;
-}
-
-Lexer::Lexer(ifstream &inputFile)
-{
-    if (!inputFile.is_open())
-    {
-        // TODO: Add IO error handling
+public:
+    Lexer(const char* input) : input(input), position(0) {
+	keywords.insert("structure");
+	
     }
 
-    currentText = string((istreambuf_iterator<char>(inputFile)),
-                         istreambuf_iterator<char>());
-
-    currentCursor = currentText;
-    currentPosition = 0;
-}
-
-Lexer::Lexer(string &inputString)
-{
-    currentText = inputString;
-    currentCursor = currentText;
-    currentPosition = 0;
-}
-
-Lexer::~Lexer(void) {}
-
-void Lexer::skipLexeme(Lexeme &lexeme)
-{
-    skipWhiteSpace();
-    size_t lexemeNext = currentCursor.find(lexeme);
-    size_t lexemeLength = lexeme.length();
-    if (lexemeNext == 0)
-    {
-        currentPosition += lexemeLength;
-        currentCursor = currentCursor.substr(lexemeLength);
-    }
-}
-
-void Lexer::skipWhiteSpace(void)
-{
-    size_t i = 0;
-    while (i < currentCursor.length() && isblank(currentCursor[i]))
-    {
-        i++;
-    }
-    currentPosition += i;
-    currentCursor = currentCursor.substr(i);
-}
-
-Lexeme Lexer::peekNextLexeme(void)
-{
-    skipWhiteSpace();
-    size_t i = 0;
-    while (i < currentCursor.length() && !isblank(currentCursor[i]))
-    {
-        i++;
-    }
-    return currentCursor.substr(0, i);
-}
-
-Lexeme Lexer::peekPreviousLexeme(void)
-{
-    if (!history.empty())
-    {
-        return history.back();
-    }
-    return ""; // Add appropriate handling if history is empty
-}
-
-char Lexer::peekNextChar(void)
-{
-    if (currentPosition + 1 < currentCursor.length())
-    {
-        return currentCursor[currentPosition + 1];
-    }
-    return '\0'; // Return null character if end of cursor is reached
-}
-
-char Lexer::peekPreviousChar(void)
-{
-    if (currentPosition > 0)
-    {
-        return currentText[currentPosition - 1];
-    }
-    return '\0'; // Return null character if beginning of text is reached
-}
-
-Token
-Lexer::consumeAndReturnIdentifier (void)
-{
-     skipWhiteSpace();
-     Lexeme nextLexeme = peekNextLexeme();
-
-     for (char currentChar : nextLexeme) {
-	if (!isalnum(currentChar) || currentChar != '_') {
-	   // TODO: Handle lexical error
-	}
-     }
-     
-     skipLexeme(nextLexeme);
-     return Token(nextLexeme, TOKEN_IDENTIFIER);
-}
-
-Token
-Lexer::consumeAndReturnKeyword (Lexeme &keyword)
-{
-    skipWhiteSpace();
-    Lexeme nextLexeme = peekNextLexeme();
-
-    // TODO: Implement keyword matching
-}
-
-Token
-Lexer::consumeAndReturnOperator (void)
-{
-     skipWhiteSpace();
-     char nextChar = peekNextChar();
-
-     switch (nextChar) {
-	case '+':
-	case '-':
-	case '*':
-	case '/':
-	case '%':
-	if (currentCursor[1] == ' ') {
-	   // TODO: Handle lexical error
-	}
-	string lexeme(1, nextChar);
-	skipLexeme(lexeme);
-	return Token(lexeme, TOKEN_OPERATOR);
-
-	case '&':
-	case '|':
-	if (currentCursor[1] == ' ') {
-	   string lexeme(1, nextChar);
-	   skipLexeme(lexeme);
-	   return Token(lexeme, TOKEN_OPERATOR);
-	} else if (currentCursor[1] == nextChar) {
-	   string lexeme(2, nextChar);
-	   skipLexeme(lexeme);
-	   return Token(lexeme, TOKEN_OPERATOR_LITERAL);
-	}
-
-     }
-}
-
-Token
-Lexer::consumeAndReturnIntegerLiteral (void)
-{
-    skipWhiteSpace();
-    Lexeme nextLexeme = peekNextLexeme();
-
-    for (char currentChar : nextLexeme) {
-	if (!isdigit(currentChar) || !isxdigit(currentChar)) {
-	    // TODO: Handle lexical error
-	}
+    char peek() const {
+        return input[position];
     }
 
-    skipLexeme(nextLexeme);
-    return Token(nextLexeme, TOKEN_INTEGER_LITERAL);
-}
-
-Token
-Lexer::consumeAndReturnFloatLiteral (void)
-{
-    skipWhiteSpace();
-    Lexeme nextLexeme = peekNextLexeme();
-
-    for (char currentChar : nextLexeme) {
-	if (!isdigit(currentChar) 
-			|| !(currentChar == 'e' 
-				|| currentChar == '.' 
-				|| currentChar == 'E')) {
-		// TODO: Handle lexical error
-	}
+    void advance() {
+        if (input[position] != '\0') {
+            ++position;
+        }
     }
 
-    skipLexeme(nextLexeme);
-    return Token(nextLexeme, TOKEN_FLOAT_LITERAL);
-}
-
-Token
-Lexer::consumeAndReturnStringLiteral (void)
-{
-    skipWhiteSpace();
-    Lexeme currentLexeme = peekNextLexeme();
-
-    if (currentLexeme[0] != '"') {
-	// TODO: Handle lexical error
+    std::string previousLexeme() const {
+        return std::string(input, position);
     }
 
-    skipLexeme(currentLexeme);
-    return Token(parseString(currentLexeme), TOKEN_STRING_LITERAL);    
+    void skipWhitespace() {
+        while (std::isspace(peek())) {
+            advance();
+        }
+    }
+
+    std::string consumeAlphabeticIdentifier() {
+        size_t start = position;
+        while (std::isalpha(peek()) || peek() == '_' || peek() == '\'') {
+            advance();
+        }
+        return std::string(input + start, position - start);
+    }
+
+    std::string consumeSymbolicIdentifier() {
+        size_t start = position;
+        while (ispunct(peek()) && peek() != '\'' && peek() != '"') {
+            advance();
+        }
+        return std::string(input + start, position - start);
+    }
+
+
+    std::string consumeOperator() {
+        size_t start = position;
+        while (ispunct(peek()) && peek() != '\'' && peek() != '"' && !std::isalpha(peek())) {
+            advance();
+        }
+        return std::string(input + start, position - start);
+    }
+
+    std::string consumeStringLiteral() {
+        std::string value;
+        advance(); 
+        while (peek() != '"' && peek() != '\0') {
+            value.push_back(peek());
+            advance();
+        }
+        advance(); 
+        return value;
+    }
+
+    std::string consumeDigitSequence() {
+        size_t start = position;
+        while (std::isdigit(peek())) {
+            advance();
+        }
+        return std::string(input + start, position - start);
+    }
+
+    std::string consumeFloatingPointLiteral() {
+        std::string value = consumeDigitSequence();
+        if (peek() == '.') {
+            value.push_back('.');
+            advance();
+            value += consumeDigitSequence();
+        }
+        if (peek() == 'e' || peek() == 'E') {
+            value.push_back(peek());
+            advance();
+            if (peek() == '+' || peek() == '-') {
+                value.push_back(peek());
+                advance();
+            }
+            value += consumeDigitSequence();
+        }
+        return value;
+    }
+
+
+    char consumeCharacterLiteral() {
+        char value = '\0';
+        advance(); 
+        if (peek() != '\'' && peek() != '\0') {
+            if (peek() == '\\') {
+                advance(); 
+                switch (peek()) {
+                    case 'n':
+                        value = '\n';
+                        break;
+                    case 't':
+                        value = '\t';
+                        break;
+                    case '\'':
+                        value = '\'';
+                        break;
+                    case '"':
+                        value = '\"';
+                        break;
+                    case '\\':
+                        value = '\\';
+                        break;
+                    case 'r':
+                        value = '\r';
+                        break;
+                    case 'a':
+                        value = '\a';
+                        break;
+                    case 'b':
+                        value = '\b';
+                        break;
+                    case 'f':
+                        value = '\f';
+                        break;
+                    case 'v':
+                        value = '\v';
+                        break;
+                    case 'x':
+                        advance(); 
+                        value = lexHexEscape();
+                        break;
+                    case 'U':
+                        advance(); 
+                        value = lexUnicodeEscape();
+                        break;
+                    default:
+                        
+                        break;
+                }
+            } else {
+                value = peek();
+            }
+            advance();
+        }
+        advance(); 
+        return value;
+    }
+
+    char lexHexEscape() {
+        char hexValue = 0;
+        while (std::isxdigit(peek())) {
+            hexValue = hexValue * 16 + hexDigitValue(peek());
+            advance();
+        }
+        return hexValue;
+    }
+
+    char lexUnicodeEscape() {
+        char unicodeValue = 0;
+        for (int i = 0; i < 8; ++i) {
+            if (std::isxdigit(peek())) {
+                unicodeValue = unicodeValue * 16 + hexDigitValue(peek());
+                advance();
+            } else {
+                break;
+            }
+        }
+        return unicodeValue;
+    }
+
+    int hexDigitValue(char digit) {
+        if (std::isdigit(digit)) {
+            return digit - '0';
+        } else if (std::isxdigit(digit)) {
+            return std::tolower(digit) - 'a' + 10;
+        }
+        return 0;
+    }
+
+   std::string consumeKeyword() {
+        size_t start = position;
+        while (std::isalpha(peek()) || peek() == '_') {
+            advance();
+        }
+        std::string keyword = std::string(input + start, position - start);
+        if (keywords.count(keyword)) {
+            return keyword;
+        }
+        return ""; 
+    }
+};
+
+int main() {
+    const char* input = "structure identifier = structure;";
+    Lexer lexer(input);
+
+    lexer.skipWhitespace();
+    std::cout << "Identifier: " << lexer.consumeIdentifier() << std::endl;
+
+    return 0;
 }
 
-Token
-Lexer::consumeAndReturnCharLiteral (void)
-{
-   skipWhiteSpace();
-   Lexeme currentLexeme = peekNextLexeme();
-
-   if (currentLexeme[0] != '\'' || currentLexeme[2] != '\'') {
-	// TODO: Handle lexical error
-   }
-
-   string lexeme(1, currentLexeme[1]);
-   skipLexeme(currentLexeme);
-   return Token(lexeme, TOKEN_CHAR_LITERAL);
-
-}
